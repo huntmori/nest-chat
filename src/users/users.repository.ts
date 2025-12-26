@@ -9,14 +9,23 @@ export class UsersRepository {
     @InjectRepository(User)
     private readonly repository: Repository<User>,
   ) {}
+  async createOne(
+    id: string,
+    password: string,
+    email: string,
+    nickname: string,
+  ) {
+    const user = new User();
+    user.id = id;
+    user.password = password;
+    user.email = email;
+    user.nickname = nickname;
 
-  async create(email: string, name: string, password: string): Promise<User> {
-    const user = this.repository.create({ email, name, password });
-    return await this.repository.save(user);
+    return this.repository.save(user);
   }
 
   async findById(id: number): Promise<User | null> {
-    return await this.repository.findOne({ where: { id } });
+    return await this.repository.findOne({ where: { idx: id } });
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -34,6 +43,6 @@ export class UsersRepository {
 
   async delete(id: number): Promise<boolean> {
     const result = await this.repository.delete(id);
-    return result.affected > 0;
+    return (result?.affected ?? 0) > 0;
   }
 }
