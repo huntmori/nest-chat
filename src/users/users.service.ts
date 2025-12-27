@@ -3,8 +3,7 @@ import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly userRepository: UsersRepository) {
-  }
+  constructor(private readonly userRepository: UsersRepository) {}
 
   async createUser(
     id: string,
@@ -24,5 +23,13 @@ export class UsersService {
     console.log(result);
 
     return result;
+  }
+
+  async getOneByUuid(uuid: string) {
+    return await this.userRepository.find({ uuid: uuid });
+  }
+
+  async getOneByIdx(idx: number) {
+    return await this.userRepository.find({ idx: idx });
   }
 }
