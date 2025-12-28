@@ -13,6 +13,7 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.usersRepository.findByEmail(email);
     if (!user) {
+      console.log('user not found', email);
       throw new UnauthorizedException('Invalid credentials');
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);

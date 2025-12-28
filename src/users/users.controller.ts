@@ -1,8 +1,8 @@
 import {
   Body,
   Controller,
-  Get,
-  Param,
+  Get, InternalServerErrorException,
+  Param, Patch,
   Post,
   Req,
   UnauthorizedException,
@@ -14,21 +14,36 @@ import { plainToInstance } from 'class-transformer';
 import { UsersDto } from './dto/users.dto';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ApiBearerAuth, ApiHeader, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { UsersPatchNickname } from './dto/users.patch.nickname';
 
 @Controller('/api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  createUser(@Body() dto: UsersDtoPost): UsersDto {
+  async createUser(@Body() dto: UsersDtoPost): Promise<UsersDto | null> {
     console.log('dto', dto);
     console.log(process.env);
 
     const { id, password, email, nickname } = dto;
-    const user = this.usersService.createUser(id, password, email, nickname);
+    const user = await this.usersService.createUser(
+      id,
+      password,
+      email,
+      nickname,
+    );
 
-    return plainToInstance(UsersDto, user);
+    if (user === null) {
+      throw new InternalServerErrorException();
+    }
+
+    return {
+      uuid: user.uuid,
+      nickname: user.nickname,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
   }
 
   @Get('/me')
@@ -52,7 +67,7 @@ export class UsersController {
     };
   }
 
-  @Get(':uuid')
+  @Get('/uuid/:uuid')
   async getUser(@Param('uuid') uuid: string): Promise<UsersDto | null> {
     const user = await this.usersService.getOneByUuid(uuid);
     if (user === null) {
@@ -64,6 +79,40 @@ export class UsersController {
       nickname: user.nickname,
       created_at: user.createdAt,
       updated_at: user.updatedAt,
+    };
+  }
+
+  @Patch('/nickname')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '닉네임 변경' })
+  async updateNickname(
+    @Req() req: RequestWithUser,
+    @Body() dto: UsersPatchNickname,
+  ) {
+    const idx = req.user.userIdx;
+    const user = await this.usersService.getOneByIdx(idx);
+
+    if (user === null) {
+      throw new UnauthorizedException();
+    }
+    if (user.idx !== idx) {
+      throw new UnauthorizedException();
+    }
+    const updatedUser = await this.usersService.updateNickname(
+      idx,
+      dto.nickname,
+    );
+
+    if (updatedUser === null) {
+      throw new InternalServerErrorException();
+    }
+
+    return {
+      uuid: updatedUser.uuid,
+      nickname: updatedUser.nickname,
+      created_at: updatedUser.createdAt,
+      updated_at: updatedUser.updatedAt,
     };
   }
 }

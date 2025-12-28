@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 
 @Injectable()
@@ -31,5 +31,23 @@ export class UsersService {
 
   async getOneByIdx(idx: number) {
     return await this.userRepository.find({ idx: idx });
+  }
+
+  async updateNickname(idx: number, nickname: string) {
+    const user = await this.getOneByIdx(idx);
+
+    if (user === null) {
+      throw new InternalServerErrorException();
+    }
+
+    user.nickname = nickname;
+
+    const updated = await this.userRepository.update(idx, {
+      nickname: nickname,
+    });
+
+    console.log(updated);
+
+    return updated;
   }
 }
