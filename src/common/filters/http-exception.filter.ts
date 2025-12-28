@@ -25,15 +25,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      message =
-        typeof exceptionResponse !== 'string'
-          ? (exceptionResponse as any).message || exception.message
-          : exceptionResponse;
-      errorResponse.message = message;
+
+      const apiException = new ApiException('server.error', []);
+
+      if (typeof exceptionResponse === 'string') {
+        apiException.messages.push(exceptionResponse);
+      } else if (typeof exceptionResponse === 'object') {
+        if ('message' in exceptionResponse) {
+          apiException.messages.push(<string>exceptionResponse['message']);
+        }
+      }
+
+      errorResponse.error.push(apiException);
     } else if (exception instanceof Error) {
       message = exception.message;
       errorResponse.message = message;
+
+      const apiException = new ApiException('server.error', [message]);
+      errorResponse.error.push(apiException);
     }
 
     response.status(status).json(errorResponse);
