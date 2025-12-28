@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ResponseDto } from '../dto/response.dto';
+import { ApiException } from '../exceptions/ApiException';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -17,7 +18,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
 
-    if (exception instanceof HttpException) {
+    const errorResponse = new ResponseDto(false, null, message);
+
+    if (exception instanceof ApiException) {
+      errorResponse.error.push(exception);
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -25,11 +30,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         typeof exceptionResponse !== 'string'
           ? (exceptionResponse as any).message || exception.message
           : exceptionResponse;
+      errorResponse.message = message;
     } else if (exception instanceof Error) {
       message = exception.message;
+      errorResponse.message = message;
     }
-
-    const errorResponse = new ResponseDto(false, null, message);
 
     response.status(status).json(errorResponse);
   }

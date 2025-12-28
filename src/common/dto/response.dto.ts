@@ -1,7 +1,9 @@
+import { ApiException } from '../exceptions/ApiException';
+
 export class ResponseDto<T> {
   success: boolean;
   data: T;
-  error: string | string[];
+  error: ApiException[] = [];
   message?: string;
   timestamp: string;
 

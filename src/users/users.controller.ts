@@ -16,6 +16,7 @@ import type { RequestWithUser } from '../common/interfaces/request-with-user.int
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { UsersPatchNickname } from './dto/users.patch.nickname';
+import { BaseRequest } from '../common/dto/base-request';
 
 @Controller('/api/users')
 export class UsersController {
@@ -99,10 +100,16 @@ export class UsersController {
     if (user.idx !== idx) {
       throw new UnauthorizedException();
     }
-    
+
+    const dtoInstance = await BaseRequest.instanceAndValidate(
+      UsersPatchNickname,
+      dto,
+      'users.patch.nickname',
+    );
+
     const updatedUser = await this.usersService.updateNickname(
       idx,
-      dto.nickname,
+      dtoInstance.nickname,
     );
 
     if (updatedUser === null) {
