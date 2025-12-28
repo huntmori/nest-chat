@@ -99,6 +99,7 @@ export class UsersController {
     if (user.idx !== idx) {
       throw new UnauthorizedException();
     }
+    
     const updatedUser = await this.usersService.updateNickname(
       idx,
       dto.nickname,
