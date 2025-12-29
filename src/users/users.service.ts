@@ -1,8 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { UsersRepository } from './users.repository';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+
+  private readonly logger: Logger = new Logger(UsersService.name);
+
   constructor(private readonly userRepository: UsersRepository) {}
 
   async createUser(
@@ -12,10 +20,10 @@ export class UsersService {
     nickname: string,
   ) {
     console.log('incoming params', id, password, email, nickname);
-
+    const encryptedPassword = await bcrypt.hash(password, 10);
     const result = await this.userRepository.createOne(
       id,
-      password,
+      encryptedPassword,
       email,
       nickname,
     );
@@ -47,6 +55,30 @@ export class UsersService {
     });
 
     console.log(updated);
+
+    return updated;
+  }
+
+  async updatePassword(idx: number, oldPassword: string, newPassword: string) {
+    const user = await this.getOneByIdx(idx);
+
+    if (user === null) {
+      throw new InternalServerErrorException();
+    }
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordValid) {
+      throw new InternalServerErrorException();
+    }
+
+    const encryptedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = encryptedPassword;
+    const updated = await this.userRepository.update(idx, {
+      password: encryptedPassword,
+    });
+
+    this.logger.log('user password updated? ', updated !== null);
 
     return updated;
   }

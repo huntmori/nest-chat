@@ -1,8 +1,11 @@
 import {
   Body,
   Controller,
-  Get, InternalServerErrorException,
-  Param, Patch,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  Param,
+  Patch,
   Post,
   Req,
   UnauthorizedException,
@@ -17,15 +20,18 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { UsersPatchNickname } from './dto/users.patch.nickname';
 import { BaseRequest } from '../common/dto/base-request';
+import { UsersPatchPassword } from './dto/users.patch.password';
 
 @Controller('/api/users')
 export class UsersController {
+  private readonly logger: Logger = new Logger(UsersController.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   async createUser(@Body() dto: UsersDtoPost): Promise<UsersDto | null> {
-    console.log('dto', dto);
-    console.log(process.env);
+    this.logger.log('dto', dto);
+    this.logger.log(process.env);
 
     const { id, password, email, nickname } = dto;
     const user = await this.usersService.createUser(
@@ -68,7 +74,8 @@ export class UsersController {
     };
   }
 
-  @Get('/uuid/:uuid')
+  @Get('/:uuid')
+  @ApiOperation({ summary: '특정 유저 프로필 조회(uuid)' })
   async getUser(@Param('uuid') uuid: string): Promise<UsersDto | null> {
     const user = await this.usersService.getOneByUuid(uuid);
     if (user === null) {
@@ -121,6 +128,40 @@ export class UsersController {
       nickname: updatedUser.nickname,
       created_at: updatedUser.createdAt,
       updated_at: updatedUser.updatedAt,
+    };
+  }
+
+  @Patch('/password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '비밀번호 변경',
+    tags: ['Users'],
+    description: '사용자의 비밀번호를 변경합니다.',
+  })
+  async updatePassword(
+    @Req() req: RequestWithUser,
+    @Body() dto: UsersPatchPassword,
+  ) {
+    console.log(dto);
+
+    const userIdx = req.user.userIdx;
+
+    const updated = await this.usersService.updatePassword(
+      userIdx,
+      dto.oldPassword,
+      dto.newPassword,
+    );
+
+    if (updated === null) {
+      throw new InternalServerErrorException();
+    }
+
+    return {
+      uuid: updated.uuid,
+      nickname: updated.nickname,
+      created_at: updated.createdAt,
+      updated_at: updated.updatedAt,
     };
   }
 }
