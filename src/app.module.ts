@@ -5,9 +5,11 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { databaseConfig } from './config/database.config';
+import { WebsocketGateway } from './websocket/websocket.gateway';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(databaseConfig), UsersModule, AuthModule],
+  imports: [TypeOrmModule.forRoot(databaseConfig), UsersModule, AuthModule, WebsocketModule],
   controllers: [AppController],
   providers: [AppService],
 })

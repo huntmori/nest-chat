@@ -1,0 +1,16 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: nest-chat-mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-1q2w3e}
+      MARIADB_DATABASE: ${DB_DATABASE:-nest_chat}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+
+volumes:
+  mariadb_data:

@@ -97,7 +97,7 @@ export class UsersController {
   async updateNickname(
     @Req() req: RequestWithUser,
     @Body() dto: UsersPatchNickname,
-  ) {
+  ): Promise<UsersDto | null> {
     const idx = req.user.userIdx;
     const user = await this.usersService.getOneByIdx(idx);
 
@@ -142,7 +142,7 @@ export class UsersController {
   async updatePassword(
     @Req() req: RequestWithUser,
     @Body() dto: UsersPatchPassword,
-  ) {
+  ): Promise<UsersDto | null> {
     console.log(dto);
 
     const userIdx = req.user.userIdx;

@@ -20,6 +20,7 @@ async function bootstrap() {
     credentials: true,
   });
   process.loadEnvFile('.env');
+
   const config = new DocumentBuilder()
     .setTitle('Damoyo api')
     .setDescription('The Damoyo API description')
