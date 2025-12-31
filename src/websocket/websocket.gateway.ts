@@ -3,11 +3,13 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
@@ -15,7 +17,7 @@ import { Socket } from 'socket.io';
   },
 })
 export class WebsocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   private readonly logger = new Logger(WebsocketGateway.name);
 
@@ -23,6 +25,15 @@ export class WebsocketGateway
   // Key: socket.id (또는 userId 등), Value: Socket
   private readonly clients = new Map<string, Socket>();
 
+  @WebSocketServer()
+  private server: Server;
+
+  afterInit(server: Server) {
+    this.logger.log('WebSocket gateway initialized');
+    this.logger.log('server is ' + server.constructor.name);
+    this.logger.log(server.path());
+    this.server = server;
+  }
   handleConnection(@ConnectedSocket() client: Socket) {
     // 쿼리 스트링이나 인증 정보를 통해 userId를 가져올 수 있다면 이를 키로 사용할 수 있습니다.
     // 여기서는 기본적으로 socket.id를 사용하지만, 필요시 로직을 확장할 수 있습니다.
@@ -48,7 +59,7 @@ export class WebsocketGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ): string {
-    this.logger.log(`/message => client address: `, client.handshake.address)
+    this.logger.log(`/message => client address: `, client.handshake.address);
     this.logger.log(`/message => Client sent message: ${payload}`);
     return 'Hello world!';
   }
