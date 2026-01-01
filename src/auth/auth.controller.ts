@@ -16,6 +16,10 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshGuard)
   refresh(@Request() req: RequestWithUser) {
-    return this.authService.refresh(req.user.userIdx, req.user.email);
+    return this.authService.refresh(
+      req.user.userIdx,
+      req.user.email,
+      req.user.userUuid,
+    );
   }
 }

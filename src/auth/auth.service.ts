@@ -31,14 +31,14 @@ export class AuthService {
       throw new ApiException(EXCEPTION_CODE, ['Invalid credentials']);
     }
 
-    return this.generateTokens(user.idx, user.email);
+    return this.generateTokens(user.idx, user.email, user.uuid);
   }
 
-  refresh(userId: number, email: string) {
-    return this.generateTokens(userId, email);
+  refresh(userId: number, email: string, userUuid: string) {
+    return this.generateTokens(userId, email, userUuid);
   }
 
-  private generateTokens(userIdx: number, email: string) {
+  private generateTokens(userIdx: number, email: string, userUuid: string) {
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     // 개발 환경이면 약 100년(36500일), 아니면 15분/7일 설정
@@ -58,6 +58,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(
       {
         sub: userIdx,
+        userUuid,
         email,
         type: 'access',
       },
