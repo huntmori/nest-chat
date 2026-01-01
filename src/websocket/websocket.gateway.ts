@@ -86,11 +86,15 @@ export class WebsocketGateway
   }
 
   handleDisconnect(@ConnectedSocket() client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    const key = userId || client.id;
+    let userUuid = '';
+    this.clients.forEach((socket, key) => {
+      if (socket === client) {
+        userUuid = key;
+      }
+    });
 
-    this.clients.delete(key);
-    this.logger.log(`Client disconnected: ${key}`);
+    this.clients.delete(userUuid);
+    this.logger.log(`Client disconnected: ${userUuid}`);
     this.logger.log(`Current connected clients: ${this.clients.size}`);
   }
 
