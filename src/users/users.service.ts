@@ -8,7 +8,6 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-
   private readonly logger: Logger = new Logger(UsersService.name);
 
   constructor(private readonly userRepository: UsersRepository) {}

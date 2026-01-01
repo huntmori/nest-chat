@@ -8,8 +8,13 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Logger, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
+import { WsJwtAuthGuard } from '../auth/guards/ws-jwt-auth.gaurd';
+import { SocketWithUserDto } from './dto/socket-with-user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '../users/users.service';
+import { Cron } from '@nestjs/schedule';
 
 @WebSocketGateway({
   cors: {
@@ -25,6 +30,21 @@ export class WebsocketGateway
   // Key: socket.id (또는 userId 등), Value: Socket
   private readonly clients = new Map<string, Socket>();
 
+  @Cron('0 * * * * *')
+  socketMonitor() {
+    this.logger.log(`Current connected clients: ${this.clients.size}`);
+    this.clients.forEach((client) => {
+      this.logger.log(
+        `/socketMonitor => client address: ` + client.handshake.address,
+      );
+    });
+  }
+
+  constructor(
+    private jwtService: JwtService,
+    private usersService: UsersService,
+  ) {}
+
   @WebSocketServer()
   private server: Server;
 
@@ -34,14 +54,29 @@ export class WebsocketGateway
     this.logger.log(server.path());
     this.server = server;
   }
-  handleConnection(@ConnectedSocket() client: Socket) {
+
+  async handleConnection(@ConnectedSocket() client: Socket) {
     // 쿼리 스트링이나 인증 정보를 통해 userId를 가져올 수 있다면 이를 키로 사용할 수 있습니다.
     // 여기서는 기본적으로 socket.id를 사용하지만, 필요시 로직을 확장할 수 있습니다.
-    const userId = client.handshake.query.userId as string;
-    const key = userId || client.id;
+    const authValue = client.handshake.headers.authorization;
+    if (!authValue) {
+      throw new UnauthorizedException('Missing authorization header');
+    }
 
-    this.clients.set(key, client);
-    this.logger.log(`Client connected: ${key}`);
+    const token = authValue.split(' ')[1];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const decoded = this.jwtService.decode(token);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userIdx = parseInt(decoded['sub'] as string);
+    const user = await this.usersService.getOneByIdx(userIdx);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    this.logger.log('user : ' + user.uuid);
+
+    this.clients.set(user.uuid, client);
+
     this.logger.log(`Current connected clients: ${this.clients.size}`);
   }
 
@@ -54,13 +89,17 @@ export class WebsocketGateway
     this.logger.log(`Current connected clients: ${this.clients.size}`);
   }
 
+  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('message')
   handleMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketWithUserDto,
     @MessageBody() payload: any,
   ): string {
-    this.logger.log(`/message => client address: `, client.handshake.address);
-    this.logger.log(`/message => Client sent message: ${payload}`);
+    this.logger.log(`Client is : ${client.user.userIdx}`);
+    this.logger.log(`/message => client address: ` + client.handshake.address);
+    this.logger.log(
+      `/message => Client sent message: ${JSON.stringify(payload)}`,
+    );
     return 'Hello world!';
   }
 
@@ -72,8 +111,8 @@ export class WebsocketGateway
     @MessageBody() data: string,
     @ConnectedSocket() client: Socket,
   ): string {
-    this.logger.log(`/events => client address: `, client.handshake.address);
-    this.logger.log(`/events => Client sent event:`, data);
+    this.logger.log(`/events => client address: ` + client.handshake.address);
+    this.logger.log(`/events => Client sent event:` + JSON.stringify(data));
     return `Event received: ${data}`;
   }
 }

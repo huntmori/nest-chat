@@ -1,28 +1,91 @@
 <html>
 <head>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
-  <script>
-    const socket = io('http://localhost:3000');
-    socket.on('connect', function() {
-      console.log('Connected');
+  <script type="module">
+    const app = {
+      'access_token': '',
+      'refresh_token': ''
+    }
 
-      socket.emit('events', { test: 'test' });
-      socket.emit('message', { test: 'test' });
-      socket.emit('identity', 0, response =>
-        console.log('Identity:', response),
-      );
-    });
-    socket.on('events', function(data) {
-      console.log('event', data);
-    });
-    socket.on('exception', function(data) {
-      console.log('event', data);
-    });
-    socket.on('disconnect', function() {
-      console.log('Disconnected');
-    });
+    const btnLogin = document.querySelector('#btnLogin');
+    btnLogin.addEventListener('click', async () => {
+      console.log('btnLogin clicked');
+      const accessToken = await login();
+      console.log(accessToken);
+    })
+
+    const btnConnect = document.querySelector('#btnConnect');
+    btnConnect.addEventListener('click', () => {
+      console.log('btnConnect clicked');
+      connect();
+    })
+
+    async function login() {
+      console.log('login');
+      const api = 'http://localhost:3000/auth/login';
+      const response = await fetch(api, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          "email": document.querySelector('#txtEmail').value,
+          "password": document.querySelector('#txtPassword').value
+        })
+      })
+
+      const data = await response.json();
+
+      const accessToken = data.data.access_token;
+      const refreshToken = data.data.refresh_token;
+      app.access_token = accessToken;
+      app.refresh_token = refreshToken;
+
+      return accessToken;
+    }
+
+    function connect() {
+      const socket = io('http://localhost:3000', {
+        extraHeaders: {
+          Authorization: `Bearer ${app.access_token}`,
+        }
+      });
+      socket.on('connect', function() {
+        console.log('Connected');
+
+        socket.emit('events', { test: 'test' });
+        socket.emit('message', { test: 'test' });
+        socket.emit('identity', 0, response =>
+          console.log('Identity:', response),
+        );
+      });
+      socket.on('events', function(data) {
+        console.log('event', data);
+      });
+      socket.on('exception', function(data) {
+        console.log('event', data);
+      });
+      socket.on('disconnect', function() {
+        console.log('Disconnected');
+      });
+    }
   </script>
 </head>
 
-<body></body>
+<body>
+  <div>
+    <div>
+      <label for="txtEmail">Email</label>
+      <input type="text" id="txtEmail" name="email"/>
+    </div>
+    <div>
+      <label for="txtPassword">password</label>
+      <input type="password" id="txtPassword" name="password"/>
+    </div>
+    <div>
+      <button id="btnLogin">Login</button>
+      <button id="btnConnect">Connect</button>
+    </div>
+  </div>
+</body>
 </html>
