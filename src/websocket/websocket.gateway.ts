@@ -109,6 +109,11 @@ export class WebsocketGateway
     this.logger.log(
       `/message => Client sent message: ${JSON.stringify(payload)}`,
     );
+
+    client.emit('message', {
+      ...payload,
+      type: 'message.response',
+    });
     return 'Hello world!';
   }
 
@@ -124,6 +129,12 @@ export class WebsocketGateway
     this.logger.log(`/events => Client is : ${client.user.userIdx}`);
     this.logger.log(`/events => client address: ` + client.handshake.address);
     this.logger.log(`/events => Client sent event:` + JSON.stringify(data));
+
+    client.emit('events', {
+      type: 'events.response',
+      data: data,
+    });
+
     return `Event received: ${data}`;
   }
 }
