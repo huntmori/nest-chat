@@ -34,7 +34,6 @@ export class UsersRepository {
     return await this.repository.findOne({ where: where });
   }
 
-
   async findByEmail(email: string): Promise<User | null> {
     return await this.repository.findOne({ where: { email } });
   }

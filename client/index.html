@@ -26,6 +26,31 @@
       disconnect();
     })
 
+    const btnEmit = document.querySelector('#btnEmit');
+    btnEmit.addEventListener('click', () => {
+      const eventName = document.querySelector('#txtEventName').value;
+      const eventData = document.querySelector('#txtEventData').value;
+      
+      if (!socket || !socket.connected) {
+        alert('먼저 소켓을 연결해주세요.');
+        return;
+      }
+
+      try {
+        // 입력값이 JSON 형태라면 객체로 변환하여 전송, 아니면 문자열 그대로 전송
+        const payload = eventData.startsWith('{') || eventData.startsWith('[') 
+          ? JSON.parse(eventData) 
+          : eventData;
+        
+        socket.emit(eventName, payload);
+        txtLogs.value += `[Sent] Event: ${eventName}, Data: ${eventData}\n`;
+      } catch (e) {
+        // JSON 파싱 실패 시 문자열로 전송
+        socket.emit(eventName, eventData);
+        txtLogs.value += `[Sent] Event: ${eventName}, Data: ${eventData}\n`;
+      }
+    });
+
     const txtLogs = document.querySelector('#txtLogs');
 
     function disconnect() {
@@ -110,8 +135,17 @@
       <button id="btnConnect">Connect</button>
       <button id="btnDisconnect">Disconnect</button>
     </div>
+    <hr/>
+    <div style="background-color: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+      <strong>Custom Emit</strong><br/>
+      <label for="txtEventName">Event Name:</label>
+      <input type="text" id="txtEventName" value="events" placeholder="이벤트명"/><br/>
+      <label for="txtEventData">Data (String or JSON):</label><br/>
+      <textarea id="txtEventData" style="width: 100%; height: 300px;">{"test": "data"}</textarea><br/>
+      <button id="btnEmit" style="background-color: #4CAF50; color: white;">Emit Event</button>
+    </div>
   </div>
-  <div style="width: 100%; height: 500px; border: 1px solid #ccc; overflow: auto;">
+  <div style="width: 100%; height: 300px; border: 1px solid #ccc; overflow: auto;">
     <textarea id="txtLogs" style="width: 100%; height: 100%; resize: none;"></textarea>
   </div>
 </body>
