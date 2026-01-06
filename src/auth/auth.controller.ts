@@ -4,7 +4,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

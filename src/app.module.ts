@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RoomController } from './room/room.controller';
 import { RoomService } from './room/room.service';
 import { RoomModule } from './room/room.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RoomModule } from './room/room.module';
     AuthModule,
     ScheduleModule.forRoot(),
     RoomModule,
+    ChatModule,
   ],
   controllers: [AppController, RoomController],
   providers: [AppService, RoomService],

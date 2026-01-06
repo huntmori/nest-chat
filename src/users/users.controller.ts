@@ -13,11 +13,10 @@ import {
 } from '@nestjs/common';
 import { UsersDtoPost } from './dto/users.dto.post';
 import { UsersService } from './users.service';
-import { plainToInstance } from 'class-transformer';
 import { UsersDto } from './dto/users.dto';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersPatchNickname } from './dto/users.patch.nickname';
 import { BaseRequest } from '../common/dto/base-request';
 import { UsersPatchPassword } from './dto/users.patch.password';

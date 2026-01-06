@@ -15,6 +15,12 @@ export enum RoomJoinType {
   INVITE = 'INVITE',
 }
 
+export enum RoomStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  DELETED = 'DELETED',
+}
+
 @Entity('rooms')
 export class Room extends BaseEntity {
   @Column()
@@ -33,6 +39,13 @@ export class Room extends BaseEntity {
     nullable: true,
   })
   password?: string;
+
+  @Column({
+    type: 'enum',
+    enum: RoomStatus,
+    default: RoomStatus.ACTIVE,
+  })
+  status: RoomStatus;
 
   @ManyToOne(() => User, (user) => user.ownedRooms)
   owner: User;

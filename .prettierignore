@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Client (Vue.js app)
+client
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+
+# Test coverage
+coverage
